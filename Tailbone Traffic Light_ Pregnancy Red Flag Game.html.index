@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tailbone Traffic Light: Pregnancy Red Flag Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8eef2; --surface:#ffffff; --ink:#14212b; --muted:#4b5c69; --line:#c7d2da;
+  --housing:#17242e; --green:#168a47; --amber:#f2a900; --red:#d6342c; --on-amber:#1b1400;
+  --hl:#14212b;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0f1a22;--surface:#18262f;--ink:#eaf1f5;--muted:#a3b3bf;--line:#2c3d49;--housing:#070d11;--hl:#eaf1f5}
+}
+:root[data-theme="dark"]{--bg:#0f1a22;--surface:#18262f;--ink:#eaf1f5;--muted:#a3b3bf;--line:#2c3d49;--housing:#070d11;--hl:#eaf1f5}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,sans-serif;font-size:18px;line-height:1.5;min-height:100vh}
+main{max-width:980px;margin:0 auto;padding:20px 18px 36px}
+h1,h2{font-family:"Bricolage Grotesque","Trebuchet MS",sans-serif;line-height:1.1;margin:0}
+h1{font-size:clamp(30px,6vw,52px);font-weight:800}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.meter{color:var(--muted);font-weight:600}
+.stage{display:grid;grid-template-columns:1fr 210px;gap:22px;align-items:start}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:26px 26px 22px;min-height:230px}
+.card h2{font-size:clamp(24px,4vw,34px);font-weight:600}
+.prompt{color:var(--muted);margin:0 0 10px}
+.feedback{margin-top:18px;padding:16px 18px;border-radius:12px;border-left:10px solid var(--line);background:var(--bg)}
+.feedback strong{display:block;font-size:1.1em;margin-bottom:4px}
+.feedback p{margin:4px 0}
+.feedback.good{border-left-color:var(--green)}
+.feedback.bad{border-left-color:var(--red)}
+.lights{background:var(--housing);border-radius:34px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.lamp{appearance:none;border:0;border-radius:50%;width:100%;aspect-ratio:1;cursor:pointer;font:800 17px/1.15 "Bricolage Grotesque",sans-serif;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;transition:transform .12s,box-shadow .2s,opacity .2s}
+.lamp small{display:block;font:600 13px/1.2 "Figtree",sans-serif;margin-top:3px}
+.lamp.g{background:var(--green)} .lamp.a{background:var(--amber);color:var(--on-amber)} .lamp.r{background:var(--red)}
+.lamp:hover:not(:disabled){transform:scale(1.04)}
+.lamp:focus-visible,.btn:focus-visible{outline:4px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px var(--hl)}
+.lamp:disabled{cursor:default;opacity:.35}
+.lamp.correct{opacity:1;box-shadow:0 0 0 6px #fff,0 0 28px 8px rgba(255,255,255,.55)}
+.lamp.wrong{opacity:.35}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--ink);color:var(--bg);font:600 18px "Figtree",sans-serif;padding:13px 24px;cursor:pointer;margin-top:14px}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--ink);margin-left:8px}
+.legend{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.legend li{display:flex;gap:10px;align-items:baseline}
+.dot{flex:none;width:14px;height:14px;border-radius:50%;transform:translateY(2px)}
+.hidden{display:none}
+.intro p{max-width:60ch}
+.result-list{padding-left:20px}
+.foot{margin-top:26px;color:var(--muted);font-size:15px;max-width:70ch}
+@media (max-width:720px){
+  body{font-size:17px}
+  .stage{grid-template-columns:1fr}
+  .lights{flex-direction:row;border-radius:28px;padding:12px;gap:10px}
+  .lamp{font-size:14px;padding:6px}
+  .lamp small{display:none}
+}
+@media (prefers-reduced-motion:reduce){.lamp{transition:none}.lamp:hover:not(:disabled){transform:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Tailbone Traffic Light</h1>
+    <div class="meter" id="meter" aria-live="polite"></div>
+  </div>
+
+  <section id="intro" class="card intro">
+    <h2>Which light does each symptom get?</h2>
+    <p>Tailbone pain (coccydynia) is common in pregnancy and is usually mechanical. A few signs mean something else is going on. Read each card, then tap the light you think fits.</p>
+    <ul class="legend">
+      <li><span class="dot" style="background:var(--green)"></span><span><b>Green:</b> typical pattern. Self-care and mention it at your next antenatal visit.</span></li>
+      <li><span class="dot" style="background:var(--amber)"></span><span><b>Amber:</b> book a midwife, GP or physio assessment soon.</span></li>
+      <li><span class="dot" style="background:var(--red)"></span><span><b>Red:</b> get medical help now: call your maternity unit or emergency services.</span></li>
+    </ul>
+    <button class="btn" id="start">Start the game</button>
+  </section>
+
+  <section id="game" class="stage hidden">
+    <div class="card" aria-live="polite">
+      <p class="prompt" id="prompt"></p>
+      <h2 id="symptom"></h2>
+      <div id="feedback" class="feedback hidden"></div>
+      <button class="btn hidden" id="next">Next card</button>
+    </div>
+    <div class="lights" role="group" aria-label="Choose a light">
+      <button class="lamp g" data-k="g" aria-label="Green, self-care (key 1)">Green<small>Self-care</small></button>
+      <button class="lamp a" data-k="a" aria-label="Amber, see someone soon (key 2)">Amber<small>See someone soon</small></button>
+      <button class="lamp r" data-k="r" aria-label="Red, urgent (key 3)">Red<small>Urgent</small></button>
+    </div>
+  </section>
+
+  <section id="end" class="card hidden">
+    <h2 id="endTitle"></h2>
+    <p id="endMsg"></p>
+    <div id="missed"></div>
+    <button class="btn" id="again">Play again</button>
+  </section>
+
+  <p class="foot">Educational game only, not medical advice. Always speak to your midwife, doctor or a pelvic-health physiotherapist about your own symptoms. Based on NHS coccydynia guidance, NHS physiotherapy leaflets for pregnancy, and general obstetric advice.</p>
+</main>
+
+<script>
+var CARDS = [
+ {t:"Tailbone pain when sitting on a hard chair that eases when you stand or use a cushion", k:"g",
+  why:"This is the classic mechanical pattern. Pregnancy shifts posture and adds weight, which loads the coccyx.",
+  act:"Try a U-shaped or wedge cushion, change position often and avoid long sits on hard seats."},
+ {t:"A dull ache that is worst when standing up after sitting", k:"g",
+  why:"Pain on changing position is typical of coccydynia and not a warning sign by itself.",
+  act:"Lean forward slightly to stand, pace your activities and mention it at your next antenatal visit."},
+ {t:"A mild ache after a long lecture that settles with a short walk and a cushion", k:"g",
+  why:"Pain that follows sitting and eases with movement suggests a mechanical cause.",
+  act:"Break up sitting time, use cushioning and keep gently active within your pain limits."},
+ {t:"Tailbone pain that has not improved after several weeks of self-care", k:"a",
+  why:"Pain that is not settling deserves a proper assessment rather than more waiting.",
+  act:"See your GP, midwife or a pelvic-health physiotherapist for review."},
+ {t:"Pain with bowel movements that is getting worse, or any bleeding when you go", k:"a",
+  why:"Worsening pain or bleeding needs checking. Constipation is common in pregnancy but can add to the pain.",
+  act:"Book a GP or midwife appointment soon, and ask about safe ways to ease constipation."},
+ {t:"Tailbone pain after a fall onto your bottom, and sitting is very painful", k:"a",
+  why:"A bruised, fractured or dislocated coccyx is possible after a fall, and this can change which treatments are safe.",
+  act:"Get assessed before starting stretches or hands-on therapy. Tell your midwife about any fall."},
+ {t:"Night pain that is not linked to position, plus unintended weight loss", k:"a",
+  why:"Pain that does not behave mechanically can have other causes, so it needs a medical review.",
+  act:"Arrange a prompt GP or obstetric review and describe exactly how the pain behaves."},
+ {t:"Fever or chills with redness, swelling or discharge near the tailbone", k:"r",
+  why:"This can point to infection or an abscess, which needs urgent treatment.",
+  act:"Seek urgent medical care now. Do not wait for a physio appointment."},
+ {t:"New numbness in your legs, saddle area or genitals", k:"r",
+  why:"This can be a sign of nerve compression, so it is treated as an emergency.",
+  act:"Go to emergency care straight away."},
+ {t:"New trouble passing urine, or losing control of your bladder or bowel", k:"r",
+  why:"Along with back or tailbone pain, this is a recognised red flag for nerve involvement. It differs from the usual frequency of pregnancy.",
+  act:"Get emergency help now."},
+ {t:"Pelvic or tailbone pain with vaginal bleeding or leaking fluid", k:"r",
+  why:"This could be a pregnancy complication such as preterm labour or ruptured membranes, not coccydynia.",
+  act:"Call your maternity unit or emergency services immediately."},
+ {t:"Regular cramping or tightening in your belly with low back or tailbone pain", k:"r",
+  why:"Rhythmic pain can be a sign of preterm labour or a urinary infection.",
+  act:"Call your maternity unit now and say how often the pain comes."}
+];
+var NAMES = {g:"Green", a:"Amber", r:"Red"};
+var deck=[], i=0, score=0, locked=false, missed=[];
+var $=function(id){return document.getElementById(id)};
+var lamps=document.querySelectorAll(".lamp");
+
+function shuffle(a){a=a.slice();for(var n=a.length-1;n>0;n--){var j=Math.floor(Math.random()*(n+1));var t=a[n];a[n]=a[j];a[j]=t}return a}
+function show(id){["intro","game","end"].forEach(function(s){$(s).classList.toggle("hidden",s!==id)})}
+function start(){deck=shuffle(CARDS);i=0;score=0;missed=[];show("game");render()}
+function render(){
+  locked=false;var c=deck[i];
+  $("prompt").textContent="Card "+(i+1)+" of "+deck.length+". Which light is this?";
+  $("symptom").textContent=c.t;
+  $("meter").textContent="Score "+score+" / "+deck.length;
+  $("feedback").className="feedback hidden";$("next").classList.add("hidden");
+  lamps.forEach(function(l){l.disabled=false;l.classList.remove("correct","wrong")});
+}
+function answer(k){
+  if(locked)return;locked=true;var c=deck[i],ok=(k===c.k);
+  if(ok)score++;else missed.push({c:c,k:k});
+  lamps.forEach(function(l){l.disabled=true;l.classList.add(l.dataset.k===c.k?"correct":"wrong")});
+  var f=$("feedback");f.className="feedback "+(ok?"good":"bad");
+  f.innerHTML="";
+  var s=document.createElement("strong");s.textContent=ok?"Correct: "+NAMES[c.k]:"Not quite. This one is "+NAMES[c.k];
+  var p1=document.createElement("p");p1.textContent=c.why;
+  var p2=document.createElement("p");p2.textContent="What to do: "+c.act;
+  f.appendChild(s);f.appendChild(p1);f.appendChild(p2);
+  $("meter").textContent="Score "+score+" / "+deck.length;
+  var n=$("next");n.textContent=(i===deck.length-1)?"See my result":"Next card";n.classList.remove("hidden");n.focus();
+}
+function finish(){
+  show("end");var pct=score/deck.length;
+  $("endTitle").textContent="You scored "+score+" out of "+deck.length;
+  $("endMsg").textContent=pct===1?"Perfect run. You can spot every warning sign on the list."
+    :pct>=0.7?"Strong result. Review the cards you missed below, especially any red ones."
+    :"Good start. Have another go, and remember that red means get help now.";
+  var m=$("missed");m.innerHTML="";
+  if(missed.length){
+    var h=document.createElement("p");h.textContent="Cards to revisit:";m.appendChild(h);
+    var ul=document.createElement("ul");ul.className="result-list";
+    missed.forEach(function(x){var li=document.createElement("li");li.textContent=x.c.t+" (answer: "+NAMES[x.c.k]+")";ul.appendChild(li)});
+    m.appendChild(ul);
+  }
+  $("again").focus();
+}
+$("start").onclick=start;$("again").onclick=start;
+$("next").onclick=function(){if(i===deck.length-1){finish()}else{i++;render()}};
+lamps.forEach(function(l){l.onclick=function(){answer(l.dataset.k)}});
+document.addEventListener("keydown",function(e){
+  if($("game").classList.contains("hidden"))return;
+  var map={"1":"g","2":"a","3":"r"};
+  if(map[e.key])answer(map[e.key]);
+});
+</script>
+</body>
+</html>
